@@ -9,7 +9,7 @@ import {
 import { createAircraftModel } from './aircraft.js';
 import { AIRCRAFT, createState, DEG, step } from './flight.js';
 import { createHud } from './hud.js';
-import { createBaseLayer, createDetailLayer } from './imagery.js';
+import { addImagery } from './imagery.js';
 import { createInput } from './input.js';
 import { LOCATIONS } from './locations.js';
 import { createTerrainProvider, groundHeightAt } from './terrain.js';
@@ -22,12 +22,12 @@ const CHASE_RANGE = 38;
 // ------------------------------------------------------------------- globe
 
 const widget = new CesiumWidget('globe', {
-  baseLayer: createBaseLayer(),
+  baseLayer: false,
   terrainProvider: createTerrainProvider(),
   creditContainer: document.getElementById('credits'),
 });
 const { scene, camera } = widget;
-widget.imageryLayers.add(createDetailLayer());
+addImagery(widget);
 scene.screenSpaceCameraController.enableInputs = false;
 scene.globe.depthTestAgainstTerrain = true;
 scene.globe.tileCacheSize = 400;

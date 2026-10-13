@@ -1,8 +1,8 @@
 # Plane Simulator
 
 Fly a plane anywhere on Earth in your browser, over real terrain and satellite imagery. It's a
-nod to the flight simulator that used to hide inside Google Earth, built entirely on open data
-and open-source software. No accounts or API keys needed.
+nod to the flight simulator that used to hide inside Google Earth, built on open-source software,
+open elevation data and Esri's free satellite imagery. No accounts or API keys needed.
 
 ## Run it
 
@@ -39,8 +39,8 @@ and the wings nearly level.
 | What | Source | License |
 | --- | --- | --- |
 | Elevation | [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Terrarium PNGs from SRTM, USGS NED, ETOPO1 and others) | Open data, attribution |
-| Global imagery | [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX IT Services GmbH | CC BY 4.0 |
-| US imagery (sharper) | [USGS The National Map](https://www.usgs.gov/programs/national-geospatial-program/national-map) | Public domain |
+| Imagery | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) (Esri, Vantor, Earthstar Geographics and the GIS User Community), sub-metre in most places | Not open data: free for non-commercial use with attribution (terms on the service page) |
+| Fallback imagery | [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX IT Services GmbH, used only if Esri can't be reached | CC BY 4.0 |
 | 3D globe | [CesiumJS](https://cesium.com/platform/cesiumjs/) | Apache 2.0 |
 
 Credits for the data on screen are shown in the bottom-right corner while you fly.
@@ -51,7 +51,7 @@ Credits for the data on screen are shown in the bottom-right corner while you fl
   rudder, with stalls, landing and crashes. No browser code, so it's unit tested.
 - `src/tiles.js` and `src/terrain.js`: decode Terrarium elevation PNGs and feed them to Cesium as
   a custom heightmap terrain provider. Tiles past zoom 14 are cut from their zoom-14 parent.
-- `src/imagery.js`: the satellite layers.
+- `src/imagery.js`: the satellite imagery, with a Sentinel-2 fallback.
 - `src/hud.js`: the green head-up display, drawn on a canvas over the globe.
 - `src/aircraft.js`: a low-poly plane made from boxes, for the chase view.
 - `src/input.js`: keyboard and gamepad.

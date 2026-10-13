@@ -16,7 +16,13 @@ npm run build    # static site in dist/, deployable to any static host
 ## Fly it
 
 Pick a starting point in the menu and press **Take off here**. You start in the air, trimmed for
-level flight.
+level flight. To start anywhere else:
+
+- **Search** for a place by name, like `Mount Fuji` or `Lake Tahoe`.
+- **Type coordinates** into the same box: `36.1, -112.1`, `27.988N 86.925E` and similar.
+- **Pick on globe**: drag and zoom the globe, then click where you want to start.
+
+For a custom start you also choose the heading and the height above the ground.
 
 | Keys | Does |
 | --- | --- |
@@ -40,6 +46,7 @@ and the wings nearly level.
 | --- | --- | --- |
 | Elevation | [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Terrarium PNGs from SRTM, USGS NED, ETOPO1 and others) | Open data, attribution |
 | Imagery | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) (Esri, Vantor, Earthstar Geographics and the GIS User Community), sub-metre in most places | Not open data: free for non-commercial use with attribution (terms on the service page) |
+| Place search | [Nominatim](https://nominatim.org) over OpenStreetMap data | ODbL, © OpenStreetMap contributors |
 | Fallback imagery | [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX IT Services GmbH, used only if Esri can't be reached | CC BY 4.0 |
 | 3D globe | [CesiumJS](https://cesium.com/platform/cesiumjs/) | Apache 2.0 |
 
@@ -53,6 +60,10 @@ Credits for the data on screen are shown in the bottom-right corner while you fl
   a custom heightmap terrain provider. Tiles past zoom 14 are cut from their zoom-14 parent.
 - `src/imagery.js`: the satellite imagery, with a Sentinel-2 fallback.
 - `src/hud.js`: the green head-up display, drawn on a canvas over the globe.
-- `src/aircraft.js`: a low-poly plane made from boxes, for the chase view.
+- `src/aircraft-shape.js` and `src/mesh.js`: the plane's shape, a low-wing single-engine sport
+  plane lofted from fuselage stations and NACA airfoil sections. Pure data, unit tested.
+- `src/aircraft.js`: renders it in Cesium, with a propeller that spins with the throttle and
+  landing gear that comes down below 500 ft when slow.
 - `src/input.js`: keyboard and gamepad.
-- `src/locations.js`: starting points. Add your own with a lat/lon, heading and altitude.
+- `src/locations.js`: the preset starting points. Add your own with a lat/lon, heading and altitude.
+- `src/places.js`: coordinate parsing and place search for custom starting points.

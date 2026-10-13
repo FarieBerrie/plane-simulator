@@ -23,6 +23,10 @@
       <span><kbd>Esc</kbd> menu</span>
     </div>
     <div id="banner" role="status" hidden></div>
+    <div id="pickbar" role="status" hidden>
+      <strong>Click anywhere on the globe to start there.</strong>
+      <span>Drag to move, scroll to zoom, right-drag to tilt. <kbd>Esc</kbd> cancels.</span>
+    </div>
 
     <section id="menu" aria-labelledby="title">
       <div class="panel">
@@ -32,6 +36,37 @@
         </header>
 
         <h2>Where to</h2>
+        <form id="search" class="search" role="search">
+          <input id="search-input" type="search" placeholder="Search a place, or type lat, lon" autocomplete="off" aria-label="Search for a place or enter coordinates" />
+          <button type="submit" id="search-button">Search</button>
+          <button type="button" id="pick">Pick on globe</button>
+        </form>
+        <div id="search-results" class="locations results" aria-live="polite" hidden></div>
+        <div id="custom-options" class="custom-options" hidden>
+          <label>
+            Heading
+            <select id="custom-heading">
+              <option value="0">North</option>
+              <option value="45">Northeast</option>
+              <option value="90">East</option>
+              <option value="135">Southeast</option>
+              <option value="180">South</option>
+              <option value="225">Southwest</option>
+              <option value="270">West</option>
+              <option value="315">Northwest</option>
+            </select>
+          </label>
+          <label>
+            Height above ground
+            <select id="custom-height">
+              <option value="150">500 ft</option>
+              <option value="300" selected>1,000 ft</option>
+              <option value="760">2,500 ft</option>
+              <option value="1520">5,000 ft</option>
+              <option value="3050">10,000 ft</option>
+            </select>
+          </label>
+        </div>
         <div id="locations" class="locations"></div>
 
         <div class="actions">
@@ -54,6 +89,7 @@
 
         <footer>
           Elevation: AWS Terrain Tiles (open data). Imagery: Esri World Imagery, free for non-commercial use.
+          Place search: OpenStreetMap Nominatim.
           Globe: CesiumJS. Full credits are at the bottom of the screen.
         </footer>
       </div>

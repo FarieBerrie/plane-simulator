@@ -1,62 +1,92 @@
-// A simple low-poly aircraft built from boxes, so the chase view has something to follow without
-// shipping a 3D model. Body axes: +X forward, +Y left, +Z up, in metres.
+// Renders the aircraft from aircraft-shape.js: the airframe, landing gear that comes down near
+// the ground, and a propeller that spins with the throttle (a translucent disc at speed).
 import {
-  BoxGeometry,
+  BoundingSphere,
   Cartesian3,
   Color,
   ColorGeometryInstanceAttribute,
+  ComponentDatatype,
+  Geometry,
+  GeometryAttribute,
+  GeometryAttributes,
   GeometryInstance,
   HeadingPitchRoll,
+  Matrix3,
   Matrix4,
   PerInstanceColorAppearance,
   Primitive,
+  PrimitiveType,
   Transforms,
 } from 'cesium';
+import { buildAircraft } from './aircraft-shape.js';
 
-const WHITE = Color.fromCssColorString('#f2f2ee');
-const RED = Color.fromCssColorString('#d23a2a');
-const GLASS = Color.fromCssColorString('#1d2f4a');
-const GRAY = Color.fromCssColorString('#8a9099');
+const GEAR_DOWN_BELOW = 150; // metres above ground
+const GEAR_DOWN_SLOWER_THAN = 75; // m/s
 
-const PARTS = [
-  // [length, span, height], [x, y, z], colour
-  [[11, 1.5, 1.6], [0, 0, 0], WHITE], // fuselage
-  [[1.6, 1.1, 1.1], [6.2, 0, -0.1], GRAY], // nose
-  [[2.4, 1, 0.7], [2.6, 0, 1.0], GLASS], // canopy
-  [[2.8, 13, 0.25], [0.6, 0, -0.35], WHITE], // wing
-  [[1.2, 0.6, 0.3], [0.5, 6.6, -0.35], RED], // left wingtip
-  [[1.2, 0.6, 0.3], [0.5, -6.6, -0.35], RED], // right wingtip
-  [[1.6, 4.8, 0.2], [-5, 0, 0.35], WHITE], // tailplane
-  [[2, 0.25, 2.4], [-4.9, 0, 1.6], RED], // fin
-];
-
-export function createAircraftModel() {
-  const geometryInstances = PARTS.map(
-    ([size, offset, color]) =>
-      new GeometryInstance({
-        geometry: BoxGeometry.fromDimensions({
-          dimensions: new Cartesian3(...size),
-          vertexFormat: PerInstanceColorAppearance.VERTEX_FORMAT,
-        }),
-        modelMatrix: Matrix4.fromTranslation(new Cartesian3(...offset)),
-        attributes: { color: ColorGeometryInstanceAttribute.fromColor(color) },
-      }),
-  );
-  const primitive = new Primitive({
-    geometryInstances,
-    appearance: new PerInstanceColorAppearance({ closed: true }),
-    asynchronous: false,
+function toGeometry({ positions, normals, indices }) {
+  return new Geometry({
+    attributes: new GeometryAttributes({
+      position: new GeometryAttribute({ componentDatatype: ComponentDatatype.DOUBLE, componentsPerAttribute: 3, values: positions }),
+      normal: new GeometryAttribute({ componentDatatype: ComponentDatatype.FLOAT, componentsPerAttribute: 3, values: normals }),
+    }),
+    indices,
+    primitiveType: PrimitiveType.TRIANGLES,
+    boundingSphere: BoundingSphere.fromVertices(positions),
   });
+}
+
+function createPrimitive(parts, { translucent = false, alpha = 1 } = {}) {
+  return new Primitive({
+    geometryInstances: parts.map(
+      ({ color, mesh }) =>
+        new GeometryInstance({
+          geometry: toGeometry(mesh),
+          attributes: { color: ColorGeometryInstanceAttribute.fromColor(Color.fromCssColorString(color).withAlpha(alpha)) },
+        }),
+    ),
+    appearance: new PerInstanceColorAppearance({ translucent, closed: !translucent, flat: translucent }),
+    asynchronous: false, // custom geometry has to be built on the main thread
+  });
+}
+
+export function createAircraftModel(primitives) {
+  const shape = buildAircraft();
+  const body = primitives.add(createPrimitive(shape.body));
+  const gear = primitives.add(createPrimitive(shape.gear));
+  const propeller = primitives.add(createPrimitive(shape.propeller));
+  const disc = primitives.add(createPrimitive([shape.disc], { translucent: true, alpha: 0.15 }));
+
   const hpr = new HeadingPitchRoll();
+  const hub = Cartesian3.fromArray(shape.hub);
+  const spin = new Matrix3();
+  const hubLocal = new Matrix4();
+  let propAngle = 0;
+
   return {
-    primitive,
-    /** Places the model at a world position with the aircraft's heading, pitch and roll. */
-    update(position, s) {
+    /**
+     * Places the model at a world position with the aircraft's attitude. agl is metres above the
+     * ground (undefined if unknown); visible hides everything, e.g. in the cockpit view.
+     */
+    update(position, s, { dt, agl, visible }) {
       // Cesium's model frame faces east at heading 0; ours faces north.
       hpr.heading = s.heading - Math.PI / 2;
       hpr.pitch = s.pitch;
       hpr.roll = s.roll;
-      Transforms.headingPitchRollToFixedFrame(position, hpr, undefined, undefined, primitive.modelMatrix);
+      Transforms.headingPitchRollToFixedFrame(position, hpr, undefined, undefined, body.modelMatrix);
+      Matrix4.clone(body.modelMatrix, gear.modelMatrix);
+
+      const running = !s.crashed && s.throttle > 0.02;
+      const rpm = running ? 0.35 + 0.65 * s.throttle : 0;
+      propAngle = (propAngle + rpm * 40 * dt) % (2 * Math.PI);
+      Matrix4.fromRotationTranslation(Matrix3.fromRotationX(propAngle, spin), hub, hubLocal);
+      Matrix4.multiply(body.modelMatrix, hubLocal, propeller.modelMatrix);
+      Matrix4.clone(propeller.modelMatrix, disc.modelMatrix);
+
+      const fast = rpm > 0.5;
+      body.show = visible;
+      gear.show = visible && (s.onGround || s.crashed || ((agl ?? Infinity) < GEAR_DOWN_BELOW && s.speed < GEAR_DOWN_SLOWER_THAN));
+      propeller.show = visible && !fast;
+      disc.show = visible && fast;
     },
   };
 }

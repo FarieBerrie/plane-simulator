@@ -24,6 +24,10 @@ level flight. To start anywhere else:
 
 For a custom start you also choose the heading and the height above the ground.
 
+Cities have 3D buildings from OpenStreetMap. They load around you when you're below about
+10,000 ft above the ground, and they're solid: settle gently onto a flat roof and you've landed,
+fly into a wall and you've crashed. Turn them off in the menu if your computer struggles.
+
 | Keys | Does |
 | --- | --- |
 | `↑` `↓` or `W` `S` | Nose down / nose up (like a joystick: pull back to climb) |
@@ -46,6 +50,7 @@ and the wings nearly level.
 | --- | --- | --- |
 | Elevation | [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Terrarium PNGs from SRTM, USGS NED, ETOPO1 and others) | Open data, attribution |
 | Imagery | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) (Esri, Vantor, Earthstar Geographics and the GIS User Community), sub-metre in most places | Not open data: free for non-commercial use with attribution (terms on the service page) |
+| 3D buildings | [OpenStreetMap](https://www.openstreetmap.org) footprints and heights, as vector tiles from [OpenFreeMap](https://openfreemap.org) (OpenMapTiles schema) | ODbL, © OpenStreetMap contributors |
 | Place search | [Nominatim](https://nominatim.org) over OpenStreetMap data | ODbL, © OpenStreetMap contributors |
 | Fallback imagery | [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX IT Services GmbH, used only if Esri can't be reached | CC BY 4.0 |
 | 3D globe | [CesiumJS](https://cesium.com/platform/cesiumjs/) | Apache 2.0 |
@@ -66,4 +71,7 @@ Credits for the data on screen are shown in the bottom-right corner while you fl
   landing gear that comes down below 500 ft when slow.
 - `src/input.js`: keyboard and gamepad.
 - `src/locations.js`: the preset starting points. Add your own with a lat/lon, heading and altitude.
+- `src/building-tiles.js` and `src/buildings.js`: decode building footprints from vector tiles,
+  clip them to their tile, set them on the terrain and extrude them; also tell the flight loop
+  where the roofs are.
 - `src/places.js`: coordinate parsing and place search for custom starting points.

@@ -48,6 +48,14 @@ export function createState({ lat, lon, alt, heading = 0, speed = 90, throttle =
   };
 }
 
+/** Ends the flight where it is. */
+export function crash(s) {
+  s.crashed = true;
+  s.speed = 0;
+  s.verticalSpeed = 0;
+  return s;
+}
+
 /**
  * Advances the aircraft by dt seconds, in place.
  * controls: { elevator, aileron, rudder } in -1..1 (elevator +1 = pull back), throttle and brake in 0..1.
@@ -101,11 +109,7 @@ export function step(s, controls, dt, ground, a = AIRCRAFT) {
   if (s.alt <= floor) {
     const impact = groundRise - s.verticalSpeed;
     const wasAirborne = !s.onGround;
-    if (impact > a.maxImpactSpeed || (wasAirborne && Math.abs(s.roll) > a.maxLandingBank)) {
-      s.crashed = true;
-      s.speed = 0;
-      s.verticalSpeed = 0;
-    }
+    if (impact > a.maxImpactSpeed || (wasAirborne && Math.abs(s.roll) > a.maxLandingBank)) crash(s);
     s.alt = floor;
     s.onGround = true;
     s.stalled = false;

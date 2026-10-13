@@ -10,7 +10,8 @@ import {
   ScreenSpaceEventType,
 } from 'cesium';
 import { createAircraftModel } from './aircraft.js';
-import { AIRCRAFT, createState, DEG, step } from './flight.js';
+import { createBuildings } from './buildings.js';
+import { AIRCRAFT, crash, createState, DEG, step } from './flight.js';
 import { createHud } from './hud.js';
 import { addImagery } from './imagery.js';
 import { createInput } from './input.js';
@@ -43,6 +44,7 @@ scene.fog.density = 1.2e-4;
 camera.frustum.near = 0.5;
 
 const model = createAircraftModel(scene.primitives);
+const buildings = createBuildings(scene);
 widget.clock.shouldAnimate = false;
 
 const hud = createHud(document.getElementById('hud'));
@@ -216,6 +218,10 @@ function endPicking() {
 
 pickButton.addEventListener('click', startPicking);
 
+document.getElementById('buildings-toggle').addEventListener('change', (e) => {
+  buildings.enabled = e.target.checked;
+});
+
 new ScreenSpaceEventHandler(scene.canvas).setInputAction((click) => {
   if (!picking) return;
   const ray = camera.getPickRay(click.position);
@@ -294,6 +300,26 @@ const chaseOffset = new HeadingPitchRange();
 
 const aboveGround = (s) => (s.ground === undefined ? undefined : s.alt - AIRCRAFT.gearHeight - s.ground);
 
+let overRoof = false;
+
+/**
+ * What the aircraft would touch: the terrain, or a roof once you're above it. Flying into the
+ * side of a building ends the flight.
+ */
+function groundUnder(s) {
+  const lon = s.lon / DEG;
+  const lat = s.lat / DEG;
+  buildings.update(lon, lat, aboveGround(s));
+  const terrain = terrainHeight(s) ?? s.ground;
+  const roof = buildings.roofAt(lon, lat);
+  const wheels = s.alt - AIRCRAFT.gearHeight;
+  const wasOverRoof = overRoof;
+  overRoof = roof !== undefined && wheels >= roof - 1;
+  if (roof === undefined || (terrain !== undefined && roof <= terrain)) return terrain;
+  if (!wasOverRoof && wheels < roof - 1) crash(s);
+  return roof;
+}
+
 function terrainHeight(s) {
   scratchCarto.longitude = s.lon;
   scratchCarto.latitude = s.lat;
@@ -340,7 +366,7 @@ scene.preUpdate.addEventListener(() => {
     elapsed += dt;
     input.update(dt);
     const wasCrashed = plane.crashed;
-    step(plane, input.controls, dt, terrainHeight(plane) ?? plane.ground);
+    step(plane, input.controls, dt, groundUnder(plane));
     if (plane.crashed && !wasCrashed) showBanner('<strong>Crashed</strong><span>Press Enter to try again</span>');
   }
   input.endFrame();

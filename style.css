@@ -286,6 +286,22 @@ h2 {
   margin-top: 16px;
 }
 
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 13.5px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.setting input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
 .actions button.primary {
   border-color: transparent;
   background: var(--accent);

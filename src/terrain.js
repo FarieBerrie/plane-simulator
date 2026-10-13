@@ -56,6 +56,11 @@ export function createTerrainProvider() {
   });
 }
 
+/** The decoded 256×256 height grid of one elevation tile (shared with the globe's cache). */
+export function terrainGrid(z, x, y) {
+  return loadGrid(z, x, y);
+}
+
 /** Terrain height in metres at a point, read straight from the elevation tiles. */
 export async function groundHeightAt(lonDeg, latDeg, level = 13) {
   const t = lonLatToTilePixel(lonDeg, latDeg, level);

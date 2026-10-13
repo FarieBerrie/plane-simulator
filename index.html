@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1220" />
+    <meta name="description" content="Fly a plane anywhere on Earth in your browser, over real terrain and satellite imagery from open data." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%230b1220'/><path d='M12 3l1.6 6.4L21 13v1.8l-7.4-2-.6 5 2.2 1.7V21L12 20l-3.2 1v-1.5l2.2-1.7-.6-5-7.4 2V13l7.4-3.6z' fill='%237dff8a'/></svg>" />
+    <script>
+      window.CESIUM_BASE_URL = './cesium/';
+    </script>
+    <link rel="stylesheet" href="./cesium/Widgets/widgets.css" />
+    <link rel="stylesheet" href="./style.css" />
+    <title>Plane Simulator</title>
+  </head>
+  <body>
+    <div id="globe"></div>
+    <canvas id="hud" aria-hidden="true"></canvas>
+
+    <div id="topbar">
+      <span id="view-label">Chase view</span>
+      <span><kbd>C</kbd> switch view</span>
+      <span><kbd>Esc</kbd> menu</span>
+    </div>
+    <div id="banner" role="status" hidden></div>
+
+    <section id="menu" aria-labelledby="title">
+      <div class="panel">
+        <header>
+          <h1 id="title">Plane Simulator</h1>
+          <p>Fly anywhere on Earth over real terrain and satellite imagery, all from open data.</p>
+        </header>
+
+        <h2>Where to</h2>
+        <div id="locations" class="locations"></div>
+
+        <div class="actions">
+          <button type="button" id="start" class="primary">Take off here</button>
+          <button type="button" id="resume" hidden>Resume flight</button>
+        </div>
+
+        <h2>Controls</h2>
+        <dl class="controls">
+          <dt><kbd>↑</kbd><kbd>↓</kbd> or <kbd>W</kbd><kbd>S</kbd></dt><dd>Nose down / nose up (like a joystick)</dd>
+          <dt><kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd></dt><dd>Roll left / right. Bank to turn</dd>
+          <dt><kbd>Q</kbd><kbd>E</kbd></dt><dd>Rudder; steers on the ground</dd>
+          <dt><kbd>R</kbd><kbd>F</kbd> or <kbd>PgUp</kbd><kbd>PgDn</kbd></dt><dd>Throttle up / down</dd>
+          <dt><kbd>Space</kbd> or <kbd>B</kbd></dt><dd>Brakes</dd>
+          <dt><kbd>C</kbd></dt><dd>Chase / cockpit view</dd>
+          <dt><kbd>Esc</kbd> or <kbd>P</kbd></dt><dd>Pause and open this menu</dd>
+          <dt>Gamepad</dt><dd>Left stick flies, triggers throttle, bumpers rudder, A brakes</dd>
+        </dl>
+        <p class="tip">Land gently: under ~1,200 ft/min of sink with the wings nearly level. Too slow and the wings stall.</p>
+
+        <footer>
+          Elevation: AWS Terrain Tiles. Imagery: Sentinel-2 cloudless by EOX (CC BY 4.0) and USGS The National Map.
+          Globe: CesiumJS. Full credits are at the bottom of the screen.
+        </footer>
+      </div>
+    </section>
+
+    <div id="credits"></div>
+    <noscript><p class="noscript">Turn on JavaScript to fly.</p></noscript>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

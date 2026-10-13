@@ -1,19 +1,20 @@
 // 3D buildings from OpenStreetMap: footprints and heights come from OpenFreeMap's vector tiles
-// (free, no key), are set on the terrain and extruded. Only the 5×5 block of zoom-14 tiles
+// (free, no key), are set on the terrain and extruded with procedural facades. Only the 5×5 block of zoom-14 tiles
 // around the aircraft is kept, so a flight over a big city stays light.
 import { classifyRings, VectorTile } from '@mapbox/vector-tile';
 import {
-  Cartesian3,
-  Color,
-  ColorGeometryInstanceAttribute,
+  BoundingSphere,
+  ComponentDatatype,
   Credit,
+  Geometry,
+  GeometryAttribute,
   GeometryInstance,
-  PerInstanceColorAppearance,
-  PolygonGeometry,
-  PolygonHierarchy,
   Primitive,
+  PrimitiveType,
 } from 'cesium';
 import { PbfReader } from 'pbf';
+import { createBuildingAppearance } from './building-appearance.js';
+import { buildTileMesh, facadeFor } from './building-mesh.js';
 import { buildingColor, featurePolygons, pointInRing, ringBounds } from './building-tiles.js';
 import { terrainGrid } from './terrain.js';
 import { lonLatToTilePixel, sampleGrid, TILE_SIZE } from './tiles.js';
@@ -65,39 +66,43 @@ async function loadBuildings(x, y) {
         outer,
         holes,
         bounds: ringBounds(outer),
+        ground,
         base: minHeight > 0 ? ground + minHeight : Math.min(...grounds) - SINK,
         top: ground + height,
         color: buildingColor(feature.id ?? i, height),
+        facade: facadeFor(height),
       });
     }
   }
   return buildings;
 }
 
+const appearance = createBuildingAppearance();
+
 function createPrimitive(buildings) {
-  const instances = [];
-  for (const b of buildings) {
-    if (b.top - b.base < 0.5) continue;
-    instances.push(
-      new GeometryInstance({
-        geometry: new PolygonGeometry({
-          polygonHierarchy: new PolygonHierarchy(
-            Cartesian3.fromDegreesArray(b.outer.flat()),
-            b.holes.map((h) => new PolygonHierarchy(Cartesian3.fromDegreesArray(h.flat()))),
-          ),
-          height: b.base,
-          extrudedHeight: b.top,
-          closeBottom: false,
-          vertexFormat: PerInstanceColorAppearance.VERTEX_FORMAT,
-        }),
-        attributes: { color: ColorGeometryInstanceAttribute.fromColor(Color.fromCssColorString(b.color)) },
-      }),
-    );
-  }
-  if (!instances.length) return null;
+  const mesh = buildTileMesh(buildings);
+  if (!mesh.indices.length) return null;
+  const attribute = (componentDatatype, componentsPerAttribute, values, normalize = false) =>
+    new GeometryAttribute({ componentDatatype, componentsPerAttribute, values, normalize });
+  const geometry = new Geometry({
+    // A plain object, not GeometryAttributes: that class only keeps the names it knows, and
+    // would drop the custom facade attribute.
+    attributes: {
+      position: attribute(ComponentDatatype.DOUBLE, 3, mesh.positions),
+      normal: attribute(ComponentDatatype.FLOAT, 3, mesh.normals),
+      st: attribute(ComponentDatatype.FLOAT, 2, mesh.st),
+      color: attribute(ComponentDatatype.UNSIGNED_BYTE, 4, mesh.colors, true),
+      facade: attribute(ComponentDatatype.FLOAT, 1, mesh.facades),
+    },
+    indices: mesh.indices,
+    primitiveType: PrimitiveType.TRIANGLES,
+    boundingSphere: BoundingSphere.fromVertices(mesh.positions),
+  });
   return new Primitive({
-    geometryInstances: instances,
-    appearance: new PerInstanceColorAppearance({ translucent: false, closed: true }),
+    geometryInstances: new GeometryInstance({ geometry }),
+    appearance,
+    asynchronous: false, // hand-built geometry has to be prepared on the main thread
+    compressVertices: false, // keep normals and texture coordinates as the shader expects them
     releaseGeometryInstances: true,
     allowPicking: false,
   });

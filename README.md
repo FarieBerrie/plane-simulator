@@ -24,7 +24,9 @@ level flight. To start anywhere else:
 
 For a custom start you also choose the heading and the height above the ground.
 
-Cities have 3D buildings from OpenStreetMap. They load around you when you're below about
+Cities have 3D buildings from OpenStreetMap, with procedurally drawn facades: window grids on
+office blocks, curtain walls on towers, smaller windows on houses, shopfronts at street level and
+gravel roofs. They load around you when you're below about
 10,000 ft above the ground, and they're solid: settle gently onto a flat roof and you've landed,
 fly into a wall and you've crashed. Turn them off in the menu if your computer struggles.
 
@@ -72,6 +74,9 @@ Credits for the data on screen are shown in the bottom-right corner while you fl
 - `src/input.js`: keyboard and gamepad.
 - `src/locations.js`: the preset starting points. Add your own with a lat/lon, heading and altitude.
 - `src/building-tiles.js` and `src/buildings.js`: decode building footprints from vector tiles,
-  clip them to their tile, set them on the terrain and extrude them; also tell the flight loop
-  where the roofs are.
+  clip them to their tile and set them on the terrain; also tell the flight loop where the roofs are.
+- `src/building-mesh.js`: extrudes a tile's buildings into one mesh, with wall texture
+  coordinates in metres so windows come out the same size everywhere.
+- `src/building-appearance.js`: the facade shader. Windows are drawn procedurally and fade to
+  floor stripes and then flat colour with distance, so there's nothing to download and no shimmer.
 - `src/places.js`: coordinate parsing and place search for custom starting points.
